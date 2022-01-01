@@ -17,11 +17,14 @@ import java.io.OutputStream;
 
 public class StreamLambdaHandler implements RequestStreamHandler {
 
-    private static SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
+    private static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
     static {
         try {
+            // This is initiating to load app config values
+            @SuppressWarnings("all")
             AppConfig appConfig = new AppConfig();
+
             handler = new SpringBootProxyHandlerBuilder<AwsProxyRequest>()
                                 .asyncInit()
                                 .defaultProxy()
