@@ -8,7 +8,7 @@ import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.serverless.proxy.spring.SpringBootProxyHandlerBuilder;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.bookrepo.util.AppConfig;
+import com.bookrepo.config.AppConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,9 @@ import java.io.OutputStream;
 
 
 public class StreamLambdaHandler implements RequestStreamHandler {
+
     private static SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
+
     static {
         try {
             AppConfig appConfig = new AppConfig();

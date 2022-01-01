@@ -1,4 +1,4 @@
-package com.bookrepo.util;
+package com.bookrepo.config;
 
 import com.amazonaws.util.StringUtils;
 import com.bookrepo.Constants;
@@ -18,26 +18,26 @@ import java.util.UUID;
 
 public class AppConfig {
 
-    private static Map<String, Object> configMap;
+    private static final Map<String, Object> configMap;
 
     static {
-        String application = System.getenv().get(Constants.APP_CONFIG_APPLICATION);
-        String environment = System.getenv().get(Constants.APP_CONFIG_ENVIRONMENT);
-        String configProfileName = System.getenv().get(Constants.APP_CONFIG_PROFILE);
-        String strategy = System.getenv().get(Constants.APP_CONFIG_READ_STRATEGY);
-        String configProfile = "";
+        String configProfile;
+        String strategy = AppConfigDetails.getStrategy();
         if (!StringUtils.isNullOrEmpty(strategy) && Constants.APP_CONFIG_READ_STRATEGY_SDK.equals(strategy)) {
-            configProfile = getConfigProfileFromSDK(application, environment, configProfileName);
+            configProfile = getConfigProfileFromSDK();
         } else {
-            configProfile = getConfigProfileFromExtension(application, environment, configProfileName);
+            configProfile = getConfigProfileFromExtension();
         }
         Yaml yaml = new Yaml();
-        configMap = (Map<String, Object>) yaml.load(configProfile);
+        configMap = yaml.load(configProfile);
     }
 
-    private static String getConfigProfileFromExtension(String application, String environment, String configProfileName) {
+    private static String getConfigProfileFromExtension() {
         try {
-            String url = String.format("http://localhost:2772/applications/%s/environments/%s/configurations/%s", application, environment, configProfileName);
+            String url = String.format("http://localhost:2772/applications/%s/environments/%s/configurations/%s",
+                    AppConfigDetails.getApplication(),
+                    AppConfigDetails.getEnvironment(),
+                    AppConfigDetails.getConfigProfileName());
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(url))
                     .GET()
@@ -49,22 +49,23 @@ public class AppConfig {
                 return response.body();
             }
         } catch (IOException | InterruptedException | URISyntaxException exception) {
-
+            throw new RuntimeException("Unable to fetch data from app config");
         }
         return "";
     }
 
-    private static String getConfigProfileFromSDK(String application, String environment, String configProfileName) {
+    private static String getConfigProfileFromSDK() {
         AppConfigClient client = AppConfigClient.create();
         GetConfigurationResponse configuration = client.getConfiguration(GetConfigurationRequest.builder()
-                .application(application)
-                .environment(environment)
-                .configuration(configProfileName)
+                .application(AppConfigDetails.getApplication())
+                .environment(AppConfigDetails.getEnvironment())
+                .configuration(AppConfigDetails.getConfigProfileName())
                 .clientId(UUID.randomUUID().toString())
                 .build());
         return configuration.content().asUtf8String();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T getOrDefault(String key, T defaultValue) {
         return (T)configMap.getOrDefault(key, defaultValue);
     }
